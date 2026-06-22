@@ -1,13 +1,14 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
 import requests
+import os
 
 app = Flask(__name__)
 
 islemler = []
 
-TELEGRAM_TOKEN = "8232322100:AAFvT1ajUGzKO95AkUbvaRZAJ0quynQYNZM"
-TELEGRAM_CHAT_ID = "1719868928"
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 def telegram_gonder(mesaj):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
