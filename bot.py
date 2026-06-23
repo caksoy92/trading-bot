@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import requests
 import os
+import threading
+import time
 
 app = Flask(__name__)
 
@@ -21,6 +23,14 @@ islem_gecmisi = []
 def telegram_gonder(mesaj):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mesaj})
+
+def fiyat_al(symbol):
+    try:
+        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+        r = requests.get(url, timeout=5)
+        return float(r.json()["price"])
+    except:
+        return None
 
 def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     global bakiye
@@ -114,6 +124,15 @@ def pozisyon_kontrol(symbol, fiyat):
     elif alim_sayisi >= 3 and dusus >= STOP_ESIK:
         pozisyon_kapat(symbol, fiyat, "STOP")
 
+def fiyat_takip():
+    while True:
+        semboller = list(pozisyonlar.keys())
+        for symbol in semboller:
+            fiyat = fiyat_al(symbol)
+            if fiyat and symbol in pozisyonlar:
+                pozisyon_kontrol(symbol, fiyat)
+        time.sleep(60)
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.json
@@ -127,14 +146,10 @@ def webhook():
     if action == "sell":
         if symbol not in pozisyonlar:
             pozisyon_ac(symbol, fiyat, "short", 1)
-        else:
-            pozisyon_kontrol(symbol, fiyat)
 
     elif action == "buy":
         if symbol not in pozisyonlar:
             pozisyon_ac(symbol, fiyat, "long", 1)
-        else:
-            pozisyon_kontrol(symbol, fiyat)
 
     return jsonify({"status": "ok"})
 
@@ -147,5 +162,7 @@ def durum():
     })
 
 if __name__ == '__main__':
+    t = threading.Thread(target=fiyat_takip, daemon=True)
+    t.start()
     print("Bot başladı!")
     app.run(host='0.0.0.0', port=8080)
