@@ -10,9 +10,9 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 BASLANGIC_BAKIYE = 10.0
 KALDIRAC = 5
-KAR_HEDEF = 0.015      # %1.5
-ORTALAMA_ESIK = 0.02   # %2 düşünce ortalama
-STOP_ESIK = 0.02       # 3. alımdan %2 düşünce stop
+KAR_HEDEF = 0.015
+ORTALAMA_ESIK = 0.02
+STOP_ESIK = 0.02
 
 bakiye = BASLANGIC_BAKIYE
 pozisyonlar = {}
@@ -22,18 +22,19 @@ def telegram_gonder(mesaj):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mesaj})
 
-def pozisyon_ac(symbol, fiyat, kac_alim):
+def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     global bakiye
     islem_buyuklugu = BASLANGIC_BAKIYE / 3
     if bakiye < islem_buyuklugu:
         telegram_gonder(f"⚠️ {symbol} için yeterli bakiye yok!")
         return
-    
+
     adet = (islem_buyuklugu * KALDIRAC) / fiyat
     bakiye -= islem_buyuklugu
 
     if symbol not in pozisyonlar:
         pozisyonlar[symbol] = {
+            "yon": yon,
             "alimlar": [],
             "toplam_adet": 0,
             "ortalama_fiyat": 0
@@ -45,7 +46,8 @@ def pozisyon_ac(symbol, fiyat, kac_alim):
     toplam_maliyet = sum(a["fiyat"] * a["adet"] for a in poz["alimlar"])
     poz["ortalama_fiyat"] = toplam_maliyet / poz["toplam_adet"]
 
-    mesaj = (f"📈 SHORT Açıldı ({kac_alim}. alım)\n"
+    ikon = "📈" if yon == "long" else "📉"
+    mesaj = (f"{ikon} {yon.upper()} Açıldı ({kac_alim}. alım)\n"
              f"Sembol: {symbol}\n"
              f"Fiyat: {fiyat}\n"
              f"Ortalama: {poz['ortalama_fiyat']:.4f}\n"
@@ -60,15 +62,20 @@ def pozisyon_kapat(symbol, fiyat, sebep):
     poz = pozisyonlar[symbol]
     ort_fiyat = poz["ortalama_fiyat"]
     toplam_adet = poz["toplam_adet"]
-    
-    kar_yuzde = (ort_fiyat - fiyat) / ort_fiyat
-    kar_usdt = kar_yuzde * toplam_adet * fiyat
+    yon = poz["yon"]
 
+    if yon == "short":
+        kar_yuzde = (ort_fiyat - fiyat) / ort_fiyat
+    else:
+        kar_yuzde = (fiyat - ort_fiyat) / ort_fiyat
+
+    kar_usdt = kar_yuzde * toplam_adet * fiyat
     toplam_harcanan = sum(a["fiyat"] * a["adet"] / KALDIRAC for a in poz["alimlar"])
     bakiye += toplam_harcanan + kar_usdt
 
     islem_gecmisi.append({
         "symbol": symbol,
+        "yon": yon,
         "giris": ort_fiyat,
         "cikis": fiyat,
         "kar_usdt": round(kar_usdt, 4),
@@ -76,7 +83,7 @@ def pozisyon_kapat(symbol, fiyat, sebep):
         "zaman": datetime.now().strftime("%H:%M:%S")
     })
 
-    mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} Pozisyon Kapandı ({sebep})\n"
+    mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} {yon.upper()} Kapandı ({sebep})\n"
              f"Sembol: {symbol}\n"
              f"Giriş: {ort_fiyat:.4f}\n"
              f"Çıkış: {fiyat:.4f}\n"
@@ -84,6 +91,28 @@ def pozisyon_kapat(symbol, fiyat, sebep):
              f"Bakiye: {bakiye:.2f} USDT")
     telegram_gonder(mesaj)
     del pozisyonlar[symbol]
+
+def pozisyon_kontrol(symbol, fiyat):
+    if symbol not in pozisyonlar:
+        return
+    poz = pozisyonlar[symbol]
+    ort = poz["ortalama_fiyat"]
+    yon = poz["yon"]
+    alim_sayisi = len(poz["alimlar"])
+
+    if yon == "short":
+        dusus = (fiyat - ort) / ort
+        kar = (ort - fiyat) / ort
+    else:
+        dusus = (ort - fiyat) / ort
+        kar = (fiyat - ort) / ort
+
+    if kar >= KAR_HEDEF:
+        pozisyon_kapat(symbol, fiyat, "KAR HEDEFİ")
+    elif alim_sayisi < 3 and dusus >= ORTALAMA_ESIK:
+        pozisyon_ac(symbol, fiyat, yon, alim_sayisi + 1)
+    elif alim_sayisi >= 3 and dusus >= STOP_ESIK:
+        pozisyon_kapat(symbol, fiyat, "STOP")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -95,30 +124,17 @@ def webhook():
     if not symbol or not fiyat:
         return jsonify({"status": "hata"})
 
-    # SHORT sinyali — yeni pozisyon aç
     if action == "sell":
         if symbol not in pozisyonlar:
-            pozisyon_ac(symbol, fiyat, 1)
+            pozisyon_ac(symbol, fiyat, "short", 1)
         else:
-            poz = pozisyonlar[symbol]
-            ort = poz["ortalama_fiyat"]
-            alim_sayisi = len(poz["alimlar"])
+            pozisyon_kontrol(symbol, fiyat)
 
-            dusus = (fiyat - ort) / ort  # pozitif = fiyat yükseldi = zararda
-
-            if alim_sayisi == 1 and dusus >= ORTALAMA_ESIK:
-                pozisyon_ac(symbol, fiyat, 2)
-            elif alim_sayisi == 2 and dusus >= ORTALAMA_ESIK:
-                pozisyon_ac(symbol, fiyat, 3)
-            elif alim_sayisi >= 3 and dusus >= STOP_ESIK:
-                pozisyon_kapat(symbol, fiyat, "STOP")
-
-            # Kar kontrolü
-            if symbol in pozisyonlar:
-                ort = pozisyonlar[symbol]["ortalama_fiyat"]
-                kar = (ort - fiyat) / ort
-                if kar >= KAR_HEDEF:
-                    pozisyon_kapat(symbol, fiyat, "KAR HEDEFİ")
+    elif action == "buy":
+        if symbol not in pozisyonlar:
+            pozisyon_ac(symbol, fiyat, "long", 1)
+        else:
+            pozisyon_kontrol(symbol, fiyat)
 
     return jsonify({"status": "ok"})
 
