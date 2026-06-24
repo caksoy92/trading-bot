@@ -10,7 +10,7 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-BASLANGIC_BAKIYE = 10.0
+BASLANGIC_BAKIYE = 1000.0
 KALDIRAC = 5
 KAR_HEDEF = 0.015
 ORTALAMA_ESIK = 0.02
@@ -34,7 +34,7 @@ def fiyat_al(symbol):
 
 def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     global bakiye
-    islem_buyuklugu = BASLANGIC_BAKIYE / 3
+    islem_buyuklugu = 75.0
     if bakiye < islem_buyuklugu:
         telegram_gonder(f"⚠️ {symbol} için yeterli bakiye yok!")
         return
