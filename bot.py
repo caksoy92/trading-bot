@@ -184,7 +184,7 @@ if action == "sell":
             else:
                 pozisyon_ac(symbol, fiyat, "short", 1)
 
-    elif action == "buy":
+elif action == "buy":
         if symbol not in pozisyonlar:
             if trend_guclu_mu(symbol):
                 telegram_gonder(f"⏭️ {symbol} LONG atlandı (güçlü trend)")
