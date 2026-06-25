@@ -44,7 +44,28 @@ def fiyat_al(symbol):
         return float(r.json()[coin_id]["usd"])
     except:
         return None
+TREND_ESIK = 0.70
 
+def trend_guclu_mu(symbol):
+    try:
+        temiz_symbol = symbol.replace(".P", "")
+        coin_id = COINGECKO_MAP.get(temiz_symbol)
+        if not coin_id:
+            return False
+        url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days=1"
+        r = requests.get(url, timeout=10)
+        fiyatlar = [p[1] for p in r.json()["prices"][-48:]]
+        if len(fiyatlar) < 2:
+            return False
+        net_hareket = abs(fiyatlar[-1] - fiyatlar[0])
+        toplam_aralik = max(fiyatlar) - min(fiyatlar)
+        if toplam_aralik == 0:
+            return False
+        oran = net_hareket / toplam_aralik
+        return oran >= TREND_ESIK
+    except Exception as e:
+        print(f"Trend kontrol hatası: {e}")
+        return False
 def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     global bakiye
     islem_buyuklugu = 75.0
@@ -156,13 +177,19 @@ def webhook():
     if not symbol or not fiyat:
         return jsonify({"status": "hata"})
 
-    if action == "sell":
+if action == "sell":
         if symbol not in pozisyonlar:
-            pozisyon_ac(symbol, fiyat, "short", 1)
+            if trend_guclu_mu(symbol):
+                telegram_gonder(f"⏭️ {symbol} SHORT atlandı (güçlü trend)")
+            else:
+                pozisyon_ac(symbol, fiyat, "short", 1)
 
     elif action == "buy":
         if symbol not in pozisyonlar:
-            pozisyon_ac(symbol, fiyat, "long", 1)
+            if trend_guclu_mu(symbol):
+                telegram_gonder(f"⏭️ {symbol} LONG atlandı (güçlü trend)")
+            else:
+                pozisyon_ac(symbol, fiyat, "long", 1)
 
     return jsonify({"status": "ok"})
 
