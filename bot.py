@@ -26,7 +26,8 @@ def telegram_gonder(mesaj):
 
 def fiyat_al(symbol):
     try:
-        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+        temiz_symbol = symbol.replace(".P", "")
+        url = f"https://api.binance.com/api/v3/ticker/price?symbol={temiz_symbol}"
         r = requests.get(url, timeout=5)
         return float(r.json()["price"])
     except:
