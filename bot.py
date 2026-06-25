@@ -177,14 +177,14 @@ def webhook():
     if not symbol or not fiyat:
         return jsonify({"status": "hata"})
 
-if action == "sell":
+    if action == "sell":
         if symbol not in pozisyonlar:
             if trend_guclu_mu(symbol):
                 telegram_gonder(f"⏭️ {symbol} SHORT atlandı (güçlü trend)")
             else:
                 pozisyon_ac(symbol, fiyat, "short", 1)
 
-elif action == "buy":
+    elif action == "buy":
         if symbol not in pozisyonlar:
             if trend_guclu_mu(symbol):
                 telegram_gonder(f"⏭️ {symbol} LONG atlandı (güçlü trend)")
@@ -192,7 +192,6 @@ elif action == "buy":
                 pozisyon_ac(symbol, fiyat, "long", 1)
 
     return jsonify({"status": "ok"})
-
 @app.route('/durum', methods=['GET'])
 def durum():
     return jsonify({
