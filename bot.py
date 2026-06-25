@@ -13,6 +13,8 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 BASLANGIC_BAKIYE = 1000.0
 KALDIRAC = 5
 KAR_HEDEF = 0.015
+TRAILING_BASLA = 0.02    # %2 karda trailing aktifleşir
+TRAILING_MESAFE = 0.01   # tavandan %1 geri çekilince kapat
 ORTALAMA_ESIK = 0.02
 STOP_ESIK = 0.02
 
@@ -151,7 +153,25 @@ def pozisyon_kontrol(symbol, fiyat):
         dusus = (ort - fiyat) / ort
         kar = (fiyat - ort) / ort
 
-    if kar >= KAR_HEDEF:
+    # Trailing aktif mi? (kar bir kez %2'yi geçtiyse)
+    if poz.get("trailing_aktif"):
+        # En yüksek karı güncelle
+        if kar > poz["en_yuksek_kar"]:
+            poz["en_yuksek_kar"] = kar
+        # Tavandan TRAILING_MESAFE kadar geri çekildiyse kapat
+        if kar <= poz["en_yuksek_kar"] - TRAILING_MESAFE:
+            pozisyon_kapat(symbol, fiyat, "TRAILING TP")
+            return
+
+    # Kar TRAILING_BASLA'yı geçtiyse trailing'i başlat
+    if kar >= TRAILING_BASLA and not poz.get("trailing_aktif"):
+        poz["trailing_aktif"] = True
+        poz["en_yuksek_kar"] = kar
+        telegram_gonder(f"🚀 {symbol} trailing aktif! Kar: %{kar*100:.2f} (pump takibi)")
+        return
+
+    # Normal %1.5 kar hedefi (trailing devreye girmediyse)
+    if not poz.get("trailing_aktif") and kar >= KAR_HEDEF:
         pozisyon_kapat(symbol, fiyat, "KAR HEDEFİ")
     elif alim_sayisi < 3 and dusus >= ORTALAMA_ESIK:
         pozisyon_ac(symbol, fiyat, yon, alim_sayisi + 1)
