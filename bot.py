@@ -144,7 +144,7 @@ def fiyat_takip():
             fiyat = fiyat_al(symbol)
             if fiyat and symbol in pozisyonlar:
                 pozisyon_kontrol(symbol, fiyat)
-        time.sleep(30)
+        time.sleep(35)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
