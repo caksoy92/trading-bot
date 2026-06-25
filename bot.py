@@ -24,12 +24,24 @@ def telegram_gonder(mesaj):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mesaj})
 
+COINGECKO_MAP = {
+    "BTCUSDT": "bitcoin",
+    "ETHUSDT": "ethereum",
+    "SOLUSDT": "solana",
+    "RENDERUSDT": "render-token",
+    "BNBUSDT": "binancecoin",
+    "SUIUSDT": "sui"
+}
+
 def fiyat_al(symbol):
     try:
         temiz_symbol = symbol.replace(".P", "")
-        url = f"https://fapi.binance.com/fapi/v1/ticker/price?symbol={temiz_symbol}"
+        coin_id = COINGECKO_MAP.get(temiz_symbol)
+        if not coin_id:
+            return None
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
         r = requests.get(url, timeout=5)
-        return float(r.json()["price"])
+        return float(r.json()[coin_id]["usd"])
     except:
         return None
 
@@ -132,7 +144,7 @@ def fiyat_takip():
             fiyat = fiyat_al(symbol)
             if fiyat and symbol in pozisyonlar:
                 pozisyon_kontrol(symbol, fiyat)
-        time.sleep(60)
+        time.sleep(30)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
