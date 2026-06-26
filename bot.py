@@ -137,17 +137,15 @@ def fiyat_al(symbol):
 
 def trend_guclu_mu(symbol):
     try:
-        temiz_symbol = symbol.replace(".P", "")
-        coin_id = COINGECKO_MAP.get(temiz_symbol)
-        if not coin_id:
-            return False
-        url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days=1"
+        inst = okx_symbol(symbol)
+        url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=48"
         r = requests.get(url, timeout=10)
-        fiyatlar = [p[1] for p in r.json()["prices"][-48:]]
-        if len(fiyatlar) < 2:
+        mumlar = r.json()["data"]
+        if len(mumlar) < 2:
             return False
-        net_hareket = abs(fiyatlar[-1] - fiyatlar[0])
-        toplam_aralik = max(fiyatlar) - min(fiyatlar)
+        kapanislar = [float(m[4]) for m in mumlar]
+        net_hareket = abs(kapanislar[0] - kapanislar[-1])
+        toplam_aralik = max(kapanislar) - min(kapanislar)
         if toplam_aralik == 0:
             return False
         return (net_hareket / toplam_aralik) >= TREND_ESIK
