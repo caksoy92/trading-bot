@@ -23,14 +23,9 @@ TRAILING_BASLA = 0.02
 TRAILING_MESAFE = 0.01
 TREND_ESIK = 0.70
 
-COINGECKO_MAP = {
-    "BTCUSDT": "bitcoin",
-    "ETHUSDT": "ethereum",
-    "SOLUSDT": "solana",
-    "RENDERUSDT": "render-token",
-    "BNBUSDT": "binancecoin",
-    "SUIUSDT": "sui"
-}
+def okx_symbol(symbol):
+    temiz = symbol.replace(".P", "").replace("USDT", "")
+    return f"{temiz}-USDT-SWAP"
 
 def db_baglan():
     return psycopg2.connect(DATABASE_URL)
@@ -133,13 +128,10 @@ def sinyali_ilet(data):
 
 def fiyat_al(symbol):
     try:
-        temiz_symbol = symbol.replace(".P", "")
-        coin_id = COINGECKO_MAP.get(temiz_symbol)
-        if not coin_id:
-            return None
-        url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
+        inst = okx_symbol(symbol)
+        url = f"https://www.okx.com/api/v5/market/ticker?instId={inst}"
         r = requests.get(url, timeout=5)
-        return float(r.json()[coin_id]["usd"])
+        return float(r.json()["data"][0]["last"])
     except:
         return None
 
