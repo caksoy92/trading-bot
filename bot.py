@@ -284,6 +284,101 @@ def webhook():
             else:
                 pozisyon_ac(symbol, fiyat, "long", 1)
     return jsonify({"status": "ok"})
+@app.route('/panel', methods=['GET'])
+def panel():
+    return """<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trading Bot Panel</title>
+<style>
+body{font-family:-apple-system,system-ui,sans-serif;background:#0f1115;color:#e6e6e6;margin:0;padding:16px}
+h1{font-size:18px;font-weight:600;margin:0 0 16px}
+.ozet{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.kutu{background:#1a1d24;border-radius:10px;padding:14px 18px;flex:1;min-width:130px}
+.kutu .etiket{font-size:12px;color:#8a8f99;margin-bottom:6px}
+.kutu .deger{font-size:22px;font-weight:600}
+.poz{background:#1a1d24;border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid #444}
+.poz.long{border-left-color:#2ecc71}
+.poz.short{border-left-color:#e74c3c}
+.poz-ust{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sym{font-size:16px;font-weight:600}
+.yon{font-size:11px;padding:2px 8px;border-radius:6px;text-transform:uppercase}
+.yon.long{background:#1a3d2a;color:#2ecc71}
+.yon.short{background:#3d1a1a;color:#e74c3c}
+.satir{display:flex;justify-content:space-between;font-size:13px;color:#a8adb5;margin:3px 0}
+.kz{font-size:18px;font-weight:600}
+.kz.art{color:#2ecc71}
+.kz.eks{color:#e74c3c}
+.trail{font-size:11px;color:#f39c12;margin-top:4px}
+.bos{text-align:center;color:#8a8f99;padding:30px}
+.gecmis{margin-top:24px}
+.gecmis h2{font-size:15px;color:#a8adb5;margin-bottom:10px}
+.g-satir{display:flex;justify-content:space-between;font-size:13px;padding:8px;background:#1a1d24;border-radius:6px;margin-bottom:5px}
+.kucuk{font-size:11px;color:#8a8f99;text-align:center;margin-top:16px}
+</style>
+</head>
+<body>
+<h1>📊 Trading Bot Panel</h1>
+<div class="ozet">
+<div class="kutu"><div class="etiket">Bakiye</div><div class="deger" id="bakiye">-</div></div>
+<div class="kutu"><div class="etiket">Anlık K/Z</div><div class="deger" id="anlikKz">-</div></div>
+<div class="kutu"><div class="etiket">Açık Pozisyon</div><div class="deger" id="pozSayi">-</div></div>
+</div>
+<div id="pozisyonlar"></div>
+<div class="gecmis"><h2>Son İşlemler</h2><div id="gecmis"></div></div>
+<div class="kucuk">Her 30 saniyede otomatik güncellenir</div>
+<script>
+async function yukle(){
+  try{
+    const r = await fetch('/panel-veri');
+    const d = await r.json();
+    document.getElementById('bakiye').textContent = d.bakiye + ' $';
+    const kz = document.getElementById('anlikKz');
+    kz.textContent = (d.toplam_anlik_kz>=0?'+':'') + d.toplam_anlik_kz + ' $';
+    kz.style.color = d.toplam_anlik_kz>=0 ? '#2ecc71' : '#e74c3c';
+    document.getElementById('pozSayi').textContent = d.pozisyonlar.length;
+
+    const pc = document.getElementById('pozisyonlar');
+    if(d.pozisyonlar.length===0){
+      pc.innerHTML = '<div class="bos">Açık pozisyon yok</div>';
+    } else {
+      pc.innerHTML = d.pozisyonlar.map(p=>`
+        <div class="poz ${p.yon}">
+          <div class="poz-ust">
+            <span class="sym">${p.symbol}</span>
+            <span class="yon ${p.yon}">${p.yon}</span>
+          </div>
+          <div class="satir"><span>Ortalama</span><span>${p.ortalama}</span></div>
+          <div class="satir"><span>Anlık fiyat</span><span>${p.anlik}</span></div>
+          <div class="satir"><span>Alım sayısı</span><span>${p.alim_sayisi}/3</span></div>
+          <div class="satir" style="margin-top:8px">
+            <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_usdt>=0?'+':''}${p.kar_usdt} $</span>
+            <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_yuzde>=0?'+':''}${p.kar_yuzde}%</span>
+          </div>
+          ${p.trailing?'<div class="trail">🚀 Trailing aktif</div>':''}
+        </div>`).join('');
+    }
+
+    const gc = document.getElementById('gecmis');
+    const son = d.gecmis.slice(-10).reverse();
+    if(son.length===0){
+      gc.innerHTML = '<div class="bos">Henüz işlem yok</div>';
+    } else {
+      gc.innerHTML = son.map(g=>`
+        <div class="g-satir">
+          <span>${g.symbol} ${g.yon}</span>
+          <span style="color:${g.kar_usdt>=0?'#2ecc71':'#e74c3c'}">${g.kar_usdt>=0?'+':''}${g.kar_usdt} $ · ${g.sebep}</span>
+        </div>`).join('');
+    }
+  }catch(e){ console.error(e); }
+}
+yukle();
+setInterval(yukle, 30000);
+</script>
+</body>
+</html>"""
 @app.route('/panel-veri', methods=['GET'])
 def panel_veri():
     pozisyonlar = pozisyonlari_al()
