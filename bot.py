@@ -284,7 +284,43 @@ def webhook():
             else:
                 pozisyon_ac(symbol, fiyat, "long", 1)
     return jsonify({"status": "ok"})
-
+@app.route('/panel-veri', methods=['GET'])
+def panel_veri():
+    pozisyonlar = pozisyonlari_al()
+    sonuc = []
+    toplam_anlik_kz = 0
+    for symbol, poz in pozisyonlar.items():
+        anlik = fiyat_al(symbol)
+        ort = poz["ortalama_fiyat"]
+        yon = poz["yon"]
+        adet = poz["toplam_adet"]
+        if anlik:
+            if yon == "short":
+                kar_yuzde = (ort - anlik) / ort
+            else:
+                kar_yuzde = (anlik - ort) / ort
+            kar_usdt = kar_yuzde * adet * anlik
+        else:
+            kar_yuzde = 0
+            kar_usdt = 0
+            anlik = ort
+        toplam_anlik_kz += kar_usdt
+        sonuc.append({
+            "symbol": symbol,
+            "yon": yon,
+            "ortalama": round(ort, 4),
+            "anlik": round(anlik, 4),
+            "alim_sayisi": len(poz["alimlar"]),
+            "kar_yuzde": round(kar_yuzde * 100, 2),
+            "kar_usdt": round(kar_usdt, 2),
+            "trailing": poz.get("trailing_aktif", False)
+        })
+    return jsonify({
+        "bakiye": round(bakiye_al(), 2),
+        "toplam_anlik_kz": round(toplam_anlik_kz, 2),
+        "pozisyonlar": sonuc,
+        "gecmis": gecmisi_al()
+    })
 @app.route('/durum', methods=['GET'])
 def durum():
     return jsonify({
