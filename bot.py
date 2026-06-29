@@ -1,5 +1,10 @@
 from flask import Flask, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+TR_SAAT = timezone(timedelta(hours=3))
+
+def tr_simdi():
+    return datetime.now(TR_SAAT)
 import requests
 import os
 import threading
