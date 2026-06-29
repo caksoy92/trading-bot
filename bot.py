@@ -440,6 +440,25 @@ def panel_veri():
         })
     gecmis = gecmisi_al()
     realize_kz = sum(g.get("kar_usdt", 0) for g in gecmis)
+    kazananlar = [g["kar_usdt"] for g in gecmis if g.get("kar_usdt", 0) > 0]
+    kaybedenler = [g["kar_usdt"] for g in gecmis if g.get("kar_usdt", 0) < 0]
+    toplam_islem = len(gecmis)
+    kazanma_orani = round(len(kazananlar) / toplam_islem * 100, 1) if toplam_islem else 0
+    toplam_kazanc = sum(kazananlar)
+    toplam_kayip = abs(sum(kaybedenler))
+    kar_faktoru = round(toplam_kazanc / toplam_kayip, 2) if toplam_kayip > 0 else None
+    ort_kazanc = round(toplam_kazanc / len(kazananlar), 2) if kazananlar else 0
+    ort_kayip = round(sum(kaybedenler) / len(kaybedenler), 2) if kaybedenler else 0
+    sureler = [g["sure_dk"] for g in gecmis if g.get("sure_dk") is not None]
+    ort_sure = round(sum(sureler) / len(sureler), 1) if sureler else None
+    istatistik = {
+        "toplam_islem": toplam_islem,
+        "kazanma_orani": kazanma_orani,
+        "kar_faktoru": kar_faktoru,
+        "ort_kazanc": ort_kazanc,
+        "ort_kayip": ort_kayip,
+        "ort_sure": ort_sure
+    }
     kilitli = sum(a["fiyat"] * a["adet"] / KALDIRAC for poz in pozisyonlari_al().values() for a in poz["alimlar"])
     bakiye = bakiye_al()
     toplam_deger = bakiye + kilitli + toplam_anlik_kz
