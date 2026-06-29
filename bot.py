@@ -164,7 +164,8 @@ def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     bakiye_yaz(bakiye)
     pozisyonlar = pozisyonlari_al()
     if symbol not in pozisyonlar:
-        poz = {"yon": yon, "alimlar": [], "toplam_adet": 0, "ortalama_fiyat": 0}
+        poz = {"yon": yon, "alimlar": [], "toplam_adet": 0, "ortalama_fiyat": 0,
+               "acilis_zamani": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     else:
         poz = pozisyonlar[symbol]
     poz["alimlar"].append({"fiyat": fiyat, "adet": adet})
