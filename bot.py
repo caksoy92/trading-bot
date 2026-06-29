@@ -468,6 +468,7 @@ def panel_veri():
         "realize_kz": round(realize_kz, 2),
         "toplam_deger": round(toplam_deger, 2),
         "baslangic": BASLANGIC_BAKIYE,
+        "istatistik": istatistik,
         "pozisyonlar": sonuc,
         "gecmis": gecmis
     })    
