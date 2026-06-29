@@ -198,10 +198,20 @@ def pozisyon_kapat(symbol, fiyat, sebep):
     bakiye = bakiye_al()
     bakiye += toplam_harcanan + kar_usdt
     bakiye_yaz(bakiye)
+    acilis = poz.get("acilis_zamani")
+    kapanis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sure_dk = None
+    if acilis:
+        try:
+            t1 = datetime.strptime(acilis, "%Y-%m-%d %H:%M:%S")
+            t2 = datetime.strptime(kapanis, "%Y-%m-%d %H:%M:%S")
+            sure_dk = round((t2 - t1).total_seconds() / 60, 1)
+        except:
+            sure_dk = None
     gecmise_ekle({
         "symbol": symbol, "yon": yon, "giris": ort_fiyat, "cikis": fiyat,
         "kar_usdt": round(kar_usdt, 4), "sebep": sebep,
-        "zaman": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "acilis": acilis, "zaman": kapanis, "sure_dk": sure_dk
     })
     pozisyon_sil(symbol)
     mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} {yon.upper()} Kapandı ({sebep})\n"
