@@ -170,7 +170,7 @@ def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     pozisyonlar = pozisyonlari_al()
     if symbol not in pozisyonlar:
         poz = {"yon": yon, "alimlar": [], "toplam_adet": 0, "ortalama_fiyat": 0,
-               "acilis_zamani": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+               "acilis_zamani": tr_simdi().strftime("%Y-%m-%d %H:%M:%S")}
     else:
         poz = pozisyonlar[symbol]
     poz["alimlar"].append({"fiyat": fiyat, "adet": adet})
@@ -204,7 +204,7 @@ def pozisyon_kapat(symbol, fiyat, sebep):
     bakiye += toplam_harcanan + kar_usdt
     bakiye_yaz(bakiye)
     acilis = poz.get("acilis_zamani")
-    kapanis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    kapanis = tr_simdi().strftime("%Y-%m-%d %H:%M:%S")
     sure_dk = None
     if acilis:
         try:
@@ -283,7 +283,7 @@ def webhook():
         return jsonify({"status": "hata"})
     sinyal_kaydet({
         "symbol": symbol, "action": action, "price": fiyat,
-        "zaman": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "zaman": tr_simdi().strftime("%Y-%m-%d %H:%M:%S")
     })
     sinyali_ilet(data)
     pozisyonlar = pozisyonlari_al()
