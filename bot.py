@@ -410,11 +410,20 @@ def panel_veri():
             "kar_usdt": round(kar_usdt, 2),
             "trailing": poz.get("trailing_aktif", False)
         })
+    gecmis = gecmisi_al()
+    realize_kz = sum(g.get("kar_usdt", 0) for g in gecmis)
+    kilitli = sum(a["fiyat"] * a["adet"] / KALDIRAC for poz in pozisyonlari_al().values() for a in poz["alimlar"])
+    bakiye = bakiye_al()
+    toplam_deger = bakiye + kilitli + toplam_anlik_kz
     return jsonify({
-        "bakiye": round(bakiye_al(), 2),
+        "bakiye": round(bakiye, 2),
         "toplam_anlik_kz": round(toplam_anlik_kz, 2),
+        "realize_kz": round(realize_kz, 2),
+        "toplam_deger": round(toplam_deger, 2),
+        "baslangic": BASLANGIC_BAKIYE,
         "pozisyonlar": sonuc,
-        "gecmis": gecmisi_al()
+        "gecmis": gecmis
+    })    
     })
 @app.route('/durum', methods=['GET'])
 def durum():
