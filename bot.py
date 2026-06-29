@@ -341,7 +341,12 @@ async function yukle(){
     kz.textContent = (d.toplam_anlik_kz>=0?'+':'') + d.toplam_anlik_kz + ' $';
     kz.style.color = d.toplam_anlik_kz>=0 ? '#2ecc71' : '#e74c3c';
     document.getElementById('pozSayi').textContent = d.pozisyonlar.length;
-
+    const rkz = document.getElementById('realizeKz');
+    rkz.textContent = (d.realize_kz>=0?'+':'') + d.realize_kz + ' $';
+    rkz.style.color = d.realize_kz>=0 ? '#2ecc71' : '#e74c3c';
+    const td = document.getElementById('toplamDeger');
+    td.textContent = d.toplam_deger + ' $';
+    td.style.color = d.toplam_deger>=d.baslangic ? '#2ecc71' : '#e74c3c';
     const pc = document.getElementById('pozisyonlar');
     if(d.pozisyonlar.length===0){
       pc.innerHTML = '<div class="bos">Açık pozisyon yok</div>';
