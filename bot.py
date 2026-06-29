@@ -322,8 +322,10 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <body>
 <h1>📊 Trading Bot Panel</h1>
 <div class="ozet">
-<div class="kutu"><div class="etiket">Bakiye</div><div class="deger" id="bakiye">-</div></div>
+<div class="kutu"><div class="etiket">Toplam Değer</div><div class="deger" id="toplamDeger">-</div></div>
+<div class="kutu"><div class="etiket">Realize K/Z</div><div class="deger" id="realizeKz">-</div></div>
 <div class="kutu"><div class="etiket">Anlık K/Z</div><div class="deger" id="anlikKz">-</div></div>
+<div class="kutu"><div class="etiket">Bakiye</div><div class="deger" id="bakiye">-</div></div>
 <div class="kutu"><div class="etiket">Açık Pozisyon</div><div class="deger" id="pozSayi">-</div></div>
 </div>
 <div id="pozisyonlar"></div>
