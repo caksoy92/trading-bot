@@ -424,7 +424,6 @@ def panel_veri():
         "pozisyonlar": sonuc,
         "gecmis": gecmis
     })    
-    })
 @app.route('/durum', methods=['GET'])
 def durum():
     return jsonify({
