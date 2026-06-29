@@ -363,6 +363,13 @@ async function yukle(){
     kz.textContent = (d.toplam_anlik_kz>=0?'+':'') + d.toplam_anlik_kz + ' $';
     kz.style.color = d.toplam_anlik_kz>=0 ? '#2ecc71' : '#e74c3c';
     document.getElementById('pozSayi').textContent = d.pozisyonlar.length;
+    const st = d.istatistik;
+    document.getElementById('stToplam').textContent = st.toplam_islem;
+    document.getElementById('stOran').textContent = st.kazanma_orani + '%';
+    document.getElementById('stFaktor').textContent = st.kar_faktoru!=null ? st.kar_faktoru : '-';
+    document.getElementById('stOrtK').textContent = '+' + st.ort_kazanc + ' $';
+    document.getElementById('stOrtZ').textContent = st.ort_kayip + ' $';
+    document.getElementById('stSure').textContent = st.ort_sure!=null ? (st.ort_sure>=60 ? (st.ort_sure/60).toFixed(1)+' sa' : st.ort_sure+' dk') : '-';
     const rkz = document.getElementById('realizeKz');
     rkz.textContent = (d.realize_kz>=0?'+':'') + d.realize_kz + ' $';
     rkz.style.color = d.realize_kz>=0 ? '#2ecc71' : '#e74c3c';
