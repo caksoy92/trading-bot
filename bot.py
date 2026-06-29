@@ -339,6 +339,17 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <div class="kutu"><div class="etiket">Bakiye</div><div class="deger" id="bakiye">-</div></div>
 <div class="kutu"><div class="etiket">Açık Pozisyon</div><div class="deger" id="pozSayi">-</div></div>
 </div>
+<div style="background:#1a1d24;border-radius:10px;padding:14px;margin-bottom:20px">
+<div style="font-size:14px;color:#a8adb5;margin-bottom:12px;font-weight:600">📈 İstatistikler</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<div><div style="font-size:11px;color:#8a8f99">Toplam İşlem</div><div style="font-size:17px;font-weight:600" id="stToplam">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Kazanma Oranı</div><div style="font-size:17px;font-weight:600" id="stOran">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Kar Faktörü</div><div style="font-size:17px;font-weight:600" id="stFaktor">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Ort. Kazanç</div><div style="font-size:17px;font-weight:600;color:#2ecc71" id="stOrtK">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Ort. Kayıp</div><div style="font-size:17px;font-weight:600;color:#e74c3c" id="stOrtZ">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Ort. Süre</div><div style="font-size:17px;font-weight:600" id="stSure">-</div></div>
+</div>
+</div>
 <div id="pozisyonlar"></div>
 <div class="gecmis"><h2>Son İşlemler</h2><div id="gecmis"></div></div>
 <div class="kucuk">Her 30 saniyede otomatik güncellenir</div>
