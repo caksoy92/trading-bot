@@ -384,11 +384,21 @@ async function yukle(){
     if(son.length===0){
       gc.innerHTML = '<div class="bos">Henüz işlem yok</div>';
     } else {
-      gc.innerHTML = son.map(g=>`
-        <div class="g-satir">
-          <span>${g.symbol} ${g.yon}</span>
-          <span style="color:${g.kar_usdt>=0?'#2ecc71':'#e74c3c'}">${g.kar_usdt>=0?'+':''}${g.kar_usdt} $ · ${g.sebep}</span>
-        </div>`).join('');
+      gc.innerHTML = son.map(g=>{
+        let sure = g.sure_dk!=null ? (g.sure_dk>=60 ? (g.sure_dk/60).toFixed(1)+' sa' : g.sure_dk+' dk') : '-';
+        let zaman = g.zaman ? g.zaman.substring(5,16) : '';
+        return `
+        <div class="g-satir" style="flex-direction:column;align-items:stretch;gap:4px">
+          <div style="display:flex;justify-content:space-between">
+            <span>${g.symbol} ${g.yon}</span>
+            <span style="color:${g.kar_usdt>=0?'#2ecc71':'#e74c3c'}">${g.kar_usdt>=0?'+':''}${g.kar_usdt} $ · ${g.sebep}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#8a8f99">
+            <span>${zaman}</span>
+            <span>⏱ ${sure}</span>
+          </div>
+        </div>`;
+      }).join('');
     }
   }catch(e){ console.error(e); }
 }
