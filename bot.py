@@ -380,6 +380,17 @@ async function yukle(){
     document.getElementById('stOrtK').textContent = '+' + st.ort_kazanc + ' $';
     document.getElementById('stOrtZ').textContent = st.ort_kayip + ' $';
     document.getElementById('stSure').textContent = st.ort_sure!=null ? (st.ort_sure>=60 ? (st.ort_sure/60).toFixed(1)+' sa' : st.ort_sure+' dk') : '-';
+    const kd = st.kademe_dagilim;
+    const etiketler = {'1':'Sadece 1. alım','2':'2. alıma girdi','3':'3. alıma girdi (max)'};
+    document.getElementById('kademeDagilim').innerHTML = ['1','2','3'].map(k=>{
+      const d = kd[k];
+      if(d.toplam===0) return `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#8a8f99"><span>${etiketler[k]}</span><span>-</span></div>`;
+      const oran = Math.round(d.kazanan/d.toplam*100);
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0">
+        <span>${etiketler[k]}</span>
+        <span>${d.toplam} işlem · ${d.kazanan}K/${d.kaybeden}Z · %${oran} · <span style="color:${d.net>=0?'#2ecc71':'#e74c3c'}">${d.net>=0?'+':''}${d.net}$</span></span>
+      </div>`;
+    }).join('');
     const rkz = document.getElementById('realizeKz');
     rkz.textContent = (d.realize_kz>=0?'+':'') + d.realize_kz + ' $';
     rkz.style.color = d.realize_kz>=0 ? '#2ecc71' : '#e74c3c';
