@@ -494,7 +494,7 @@ def panel_veri():
         "kar_faktoru": kar_faktoru,
         "ort_kazanc": ort_kazanc,
         "ort_kayip": ort_kayip,
-        "ort_sure": ort_sure
+        "ort_sure": ort_sure,
         "kademe_dagilim": kademe_dagilim
     }
     kilitli = sum(a["fiyat"] * a["adet"] / KALDIRAC for poz in pozisyonlari_al().values() for a in poz["alimlar"])
