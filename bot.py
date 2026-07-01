@@ -26,7 +26,7 @@ ORTALAMA_ESIK = 0.03
 STOP_ESIK = 0.03
 TRAILING_BASLA = 0.02
 TRAILING_MESAFE = 0.01
-TREND_ESIK = 0.70
+TREND_ESIK = 0.85
 
 def okx_symbol(symbol):
     temiz = symbol.replace(".P", "").replace("USDT", "")
