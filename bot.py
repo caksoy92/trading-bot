@@ -354,6 +354,10 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <div><div style="font-size:11px;color:#8a8f99">Ort. Kazanç</div><div style="font-size:17px;font-weight:600;color:#2ecc71" id="stOrtK">-</div></div>
 <div><div style="font-size:11px;color:#8a8f99">Ort. Kayıp</div><div style="font-size:17px;font-weight:600;color:#e74c3c" id="stOrtZ">-</div></div>
 <div><div style="font-size:11px;color:#8a8f99">Ort. Süre</div><div style="font-size:17px;font-weight:600" id="stSure">-</div></div>
+<div style="grid-column:1/-1;margin-top:12px;border-top:1px solid #2a2d34;padding-top:12px">
+<div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Ortalama Düşürme Analizi</div>
+<div id="kademeDagilim" style="font-size:13px"></div>
+</div>
 </div>
 </div>
 <div id="pozisyonlar"></div>
