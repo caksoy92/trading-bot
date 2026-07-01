@@ -475,6 +475,19 @@ def panel_veri():
     ort_kayip = round(sum(kaybedenler) / len(kaybedenler), 2) if kaybedenler else 0
     sureler = [g["sure_dk"] for g in gecmis if g.get("sure_dk") is not None]
     ort_sure = round(sum(sureler) / len(sureler), 1) if sureler else None
+    kademe_dagilim = {}
+    for k in [1, 2, 3]:
+        islemler = [g for g in gecmis if g.get("kademe") == k]
+        if islemler:
+            kazanan = len([g for g in islemler if g.get("kar_usdt", 0) > 0])
+            kademe_dagilim[str(k)] = {
+                "toplam": len(islemler),
+                "kazanan": kazanan,
+                "kaybeden": len(islemler) - kazanan,
+                "net": round(sum(g.get("kar_usdt", 0) for g in islemler), 2)
+            }
+        else:
+            kademe_dagilim[str(k)] = {"toplam": 0, "kazanan": 0, "kaybeden": 0, "net": 0}
     istatistik = {
         "toplam_islem": toplam_islem,
         "kazanma_orani": kazanma_orani,
@@ -482,6 +495,7 @@ def panel_veri():
         "ort_kazanc": ort_kazanc,
         "ort_kayip": ort_kayip,
         "ort_sure": ort_sure
+        "kademe_dagilim": kademe_dagilim
     }
     kilitli = sum(a["fiyat"] * a["adet"] / KALDIRAC for poz in pozisyonlari_al().values() for a in poz["alimlar"])
     bakiye = bakiye_al()
