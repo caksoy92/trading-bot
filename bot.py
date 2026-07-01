@@ -216,7 +216,8 @@ def pozisyon_kapat(symbol, fiyat, sebep):
     gecmise_ekle({
         "symbol": symbol, "yon": yon, "giris": ort_fiyat, "cikis": fiyat,
         "kar_usdt": round(kar_usdt, 4), "sebep": sebep,
-        "acilis": acilis, "zaman": kapanis, "sure_dk": sure_dk
+        "acilis": acilis, "zaman": kapanis, "sure_dk": sure_dk,
+        "kademe": len(poz["alimlar"])
     })
     pozisyon_sil(symbol)
     mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} {yon.upper()} Kapandı ({sebep})\n"
