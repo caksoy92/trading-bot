@@ -409,7 +409,7 @@ async function yukle(){
           </div>
           <div class="satir"><span>Ortalama</span><span>${p.ortalama}</span></div>
           <div class="satir"><span>Anlık fiyat</span><span>${p.anlik}</span></div>
-          <div class="satir"><span>Alım sayısı</span><span>${p.alim_sayisi}/3</span></div>
+          <div class="satir"><span>Alım sayısı</span><span>${p.alim_sayisi}/2</span></div>
           <div class="satir" style="margin-top:8px">
             <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_usdt>=0?'+':''}${p.kar_usdt} $</span>
             <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_yuzde>=0?'+':''}${p.kar_yuzde}%</span>
