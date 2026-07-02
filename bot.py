@@ -275,6 +275,26 @@ def fiyat_takip():
         time.sleep(30)
 
 @app.route('/webhook', methods=['POST'])
+def sinyal_isle(symbol, fiyat, action):
+    try:
+        pozisyonlar = pozisyonlari_al()
+        if symbol in pozisyonlar:
+            return
+        yon = "short" if action == "sell" else "long" if action == "buy" else None
+        if yon is None:
+            return
+        ayni_yon = len([p for p in pozisyonlar.values() if p["yon"] == yon])
+        if ayni_yon >= MAX_YON_POZISYON:
+            telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
+            return
+        if trend_guclu_mu(symbol):
+            telegram_gonder(f"⏭️ {symbol} {yon.upper()} atlandı (güçlü trend)")
+        else:
+            pozisyon_ac(symbol, fiyat, yon, 1)
+    except Exception as e:
+        print(f"Sinyal işleme hatası: {e}")
+
+@app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.json
     symbol = data.get("symbol")
@@ -287,19 +307,7 @@ def webhook():
         "zaman": tr_simdi().strftime("%Y-%m-%d %H:%M:%S")
     })
     sinyali_ilet(data)
-    pozisyonlar = pozisyonlari_al()
-    if action == "sell":
-        if symbol not in pozisyonlar:
-            if trend_guclu_mu(symbol):
-                telegram_gonder(f"⏭️ {symbol} SHORT atlandı (güçlü trend)")
-            else:
-                pozisyon_ac(symbol, fiyat, "short", 1)
-    elif action == "buy":
-        if symbol not in pozisyonlar:
-            if trend_guclu_mu(symbol):
-                telegram_gonder(f"⏭️ {symbol} LONG atlandı (güçlü trend)")
-            else:
-                pozisyon_ac(symbol, fiyat, "long", 1)
+    threading.Thread(target=sinyal_isle, args=(symbol, fiyat, action), daemon=True).start()
     return jsonify({"status": "ok"})
 @app.route('/panel', methods=['GET'])
 def panel():
