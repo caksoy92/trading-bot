@@ -143,7 +143,7 @@ def fiyat_al(symbol):
 def trend_guclu_mu(symbol):
     try:
         inst = okx_symbol(symbol)
-        url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=48"
+        url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=12"
         r = requests.get(url, timeout=10)
         mumlar = r.json()["data"]
         if len(mumlar) < 2:
