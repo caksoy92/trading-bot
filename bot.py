@@ -27,6 +27,7 @@ STOP_ESIK = 0.03
 TRAILING_BASLA = 0.02
 TRAILING_MESAFE = 0.01
 TREND_ESIK = 0.85
+MAX_YON_POZISYON = 3
 
 def okx_symbol(symbol):
     temiz = symbol.replace(".P", "").replace("USDT", "")
