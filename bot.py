@@ -258,9 +258,7 @@ def pozisyon_kontrol(symbol, fiyat):
         return
     if not poz.get("trailing_aktif") and kar >= KAR_HEDEF:
         pozisyon_kapat(symbol, fiyat, "KAR HEDEFİ")
-    elif alim_sayisi < 2 and dusus >= ORTALAMA_ESIK:
-        pozisyon_ac(symbol, fiyat, yon, alim_sayisi + 1)
-    elif alim_sayisi >= 2 and dusus >= STOP_ESIK:
+    elif dusus >= STOP_ESIK:
         pozisyon_kapat(symbol, fiyat, "STOP")
 
 def fiyat_takip():
