@@ -275,7 +275,6 @@ def fiyat_takip():
             print(f"Fiyat takip hatası: {e}")
         time.sleep(30)
 
-@app.route('/webhook', methods=['POST'])
 def sinyal_isle(symbol, fiyat, action):
     try:
         pozisyonlar = pozisyonlari_al()
