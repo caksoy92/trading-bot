@@ -141,23 +141,27 @@ def fiyat_al(symbol):
     except:
         return None
 
-def trend_guclu_mu(symbol):
+def trend_yonu(symbol):
+    # Döndürür: "yukari", "asagi", veya "yatay"
     try:
         inst = okx_symbol(symbol)
         url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=12"
         r = requests.get(url, timeout=10)
         mumlar = r.json()["data"]
-        if len(mumlar) < 2:
-            return False
+        if len(mumlar) < 12:
+            return "yatay"
+        mumlar = list(reversed(mumlar))
         kapanislar = [float(m[4]) for m in mumlar]
-        net_hareket = abs(kapanislar[0] - kapanislar[-1])
-        toplam_aralik = max(kapanislar) - min(kapanislar)
-        if toplam_aralik == 0:
-            return False
-        return (net_hareket / toplam_aralik) >= TREND_ESIK
+        net_degisim = (kapanislar[-1] - kapanislar[0]) / kapanislar[0]
+        if net_degisim >= TREND_ESIK_YON:
+            return "yukari"
+        elif net_degisim <= -TREND_ESIK_YON:
+            return "asagi"
+        else:
+            return "yatay"
     except Exception as e:
-        print(f"Trend kontrol hatası: {e}")
-        return False
+        print(f"Trend yönü hatası: {e}")
+        return "yatay"
 
 def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     bakiye = bakiye_al()
