@@ -289,10 +289,15 @@ def sinyal_isle(symbol, fiyat, action):
         if ayni_yon >= MAX_YON_POZISYON:
             telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
             return
-        if trend_guclu_mu(symbol):
-            telegram_gonder(f"⏭️ {symbol} {yon.upper()} atlandı (güçlü trend)")
-        else:
-            pozisyon_ac(symbol, fiyat, yon, 1)
+        trend = trend_yonu(symbol)
+        # Trende ters işlemleri atla
+        if yon == "short" and trend == "yukari":
+            telegram_gonder(f"⏭️ {symbol} SHORT atlandı (piyasa yükselişte)")
+            return
+        if yon == "long" and trend == "asagi":
+            telegram_gonder(f"⏭️ {symbol} LONG atlandı (piyasa düşüşte)")
+            return
+        pozisyon_ac(symbol, fiyat, yon, 1)
     except Exception as e:
         print(f"Sinyal işleme hatası: {e}")
 
