@@ -165,7 +165,7 @@ def trend_yonu(symbol):
         print(f"Trend yönü hatası: {e}")
         return "yatay"
 
-def pozisyon_ac(symbol, fiyat, yon, kac_alim):
+def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay"):
     bakiye = bakiye_al()
     islem_buyuklugu = 75.0
     if bakiye < islem_buyuklugu:
@@ -186,10 +186,12 @@ def pozisyon_ac(symbol, fiyat, yon, kac_alim):
     poz["ortalama_fiyat"] = toplam_maliyet / poz["toplam_adet"]
     pozisyon_yaz(symbol, poz)
     ikon = "📈" if yon == "long" else "📉"
+    trend_etiket = {"yukari": "📈 Yükseliş", "asagi": "📉 Düşüş", "yatay": "➡️ Yatay"}.get(trend, trend)
     mesaj = (f"{ikon} {yon.upper()} Açıldı ({kac_alim}. alım)\n"
              f"Sembol: {symbol}\n"
              f"Fiyat: {fiyat}\n"
              f"Ortalama: {poz['ortalama_fiyat']:.4f}\n"
+             f"Trend: {trend_etiket}\n"
              f"Bakiye: {bakiye:.2f} USDT")
     telegram_gonder(mesaj)
 
