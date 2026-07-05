@@ -281,25 +281,27 @@ def fiyat_takip():
 
 def sinyal_isle(symbol, fiyat, action):
     try:
-        pozisyonlar = pozisyonlari_al()
-        if symbol in pozisyonlar:
-            return
         yon = "short" if action == "sell" else "long" if action == "buy" else None
         if yon is None:
             return
-        ayni_yon = len([p for p in pozisyonlar.values() if p["yon"] == yon])
-        if ayni_yon >= MAX_YON_POZISYON:
-            telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
-            return
+        # Trend kontrolü kilit dışında (yavaş, OKX'e gidiyor)
         trend = trend_yonu(symbol)
-        # Trende ters işlemleri atla
         if yon == "short" and trend == "yukari":
             telegram_gonder(f"⏭️ {symbol} SHORT atlandı (piyasa yükselişte)")
             return
         if yon == "long" and trend == "asagi":
             telegram_gonder(f"⏭️ {symbol} LONG atlandı (piyasa düşüşte)")
             return
-        pozisyon_ac(symbol, fiyat, yon, 1)
+        # Limit kontrolü + pozisyon açma kilit içinde (race condition önlenir)
+        with pozisyon_kilidi:
+            pozisyonlar = pozisyonlari_al()
+            if symbol in pozisyonlar:
+                return
+            ayni_yon = len([p for p in pozisyonlar.values() if p["yon"] == yon])
+            if ayni_yon >= MAX_YON_POZISYON:
+                telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
+                return
+            pozisyon_ac(symbol, fiyat, yon, 1)
     except Exception as e:
         print(f"Sinyal işleme hatası: {e}")
 
