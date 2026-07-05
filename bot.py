@@ -303,7 +303,7 @@ def sinyal_isle(symbol, fiyat, action):
             if ayni_yon >= MAX_YON_POZISYON:
                 telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
                 return
-            pozisyon_ac(symbol, fiyat, yon, 1)
+            pozisyon_ac(symbol, fiyat, yon, 1, trend)
     except Exception as e:
         print(f"Sinyal işleme hatası: {e}")
 
