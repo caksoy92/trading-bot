@@ -385,6 +385,25 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <div class="gecmis"><h2>Son İşlemler</h2><div id="gecmis"></div></div>
 <div class="kucuk">Her 30 saniyede otomatik güncellenir</div>
 <script>
+async function pozKapat(symbol){
+  if(!confirm(symbol + ' pozisyonunu kapatmak istediğine emin misin?')) return;
+  try{
+    const r = await fetch('/pozisyon-kapat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbol: symbol})
+    });
+    const d = await r.json();
+    if(d.status === 'ok'){
+      alert(symbol + ' kapatıldı');
+      yukle();
+    } else {
+      alert('Hata: ' + (d.mesaj || 'bilinmeyen'));
+    }
+  }catch(e){
+    alert('İstek hatası: ' + e);
+  }
+}
 async function yukle(){
   try{
     const r = await fetch('/panel-veri');
