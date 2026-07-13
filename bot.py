@@ -436,6 +436,7 @@ async function yukle(){
             <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_yuzde>=0?'+':''}${p.kar_yuzde}%</span>
           </div>
           ${p.trailing?'<div class="trail">🚀 Trailing aktif</div>':''}
+          <button onclick="pozKapat('${p.symbol}')" style="margin-top:10px;width:100%;padding:8px;background:#3d1a1a;color:#e74c3c;border:1px solid #e74c3c;border-radius:6px;font-size:13px;cursor:pointer">Pozisyonu Kapat</button>
         </div>`).join('');
     }
 
