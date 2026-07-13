@@ -467,6 +467,26 @@ setInterval(yukle, 30000);
 </script>
 </body>
 </html>"""
+@app.route('/pozisyon-kapat', methods=['POST'])
+def manuel_kapat():
+    try:
+        data = request.json
+        symbol = data.get("symbol")
+        if not symbol:
+            return jsonify({"status": "hata", "mesaj": "symbol yok"})
+        pozisyonlar = pozisyonlari_al()
+        if symbol not in pozisyonlar:
+            return jsonify({"status": "hata", "mesaj": "pozisyon bulunamadı"})
+        fiyat = fiyat_al(symbol)
+        if not fiyat:
+            return jsonify({"status": "hata", "mesaj": "fiyat alınamadı"})
+        with pozisyon_kilidi:
+            if symbol in pozisyonlari_al():
+                pozisyon_kapat(symbol, fiyat, "MANUEL")
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        print(f"Manuel kapatma hatası: {e}")
+        return jsonify({"status": "hata", "mesaj": str(e)})
 @app.route('/panel-veri', methods=['GET'])
 def panel_veri():
     pozisyonlar = pozisyonlari_al()
