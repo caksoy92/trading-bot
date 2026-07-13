@@ -144,22 +144,6 @@ def fiyat_al(symbol):
         return None
 
 def trend_yonu(symbol):
-def son_15dk_hareket(symbol):
-    # Açılıştan önceki 15 dakikada (3 mum) net % hareket
-    try:
-        inst = okx_symbol(symbol)
-        url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=3"
-        r = requests.get(url, timeout=10)
-        mumlar = r.json()["data"]
-        if len(mumlar) < 3:
-            return 0
-        mumlar = list(reversed(mumlar))
-        kapanislar = [float(m[4]) for m in mumlar]
-        hareket = (kapanislar[-1] - kapanislar[0]) / kapanislar[0] * 100
-        return round(hareket, 2)
-    except Exception as e:
-        print(f"15dk hareket hatası: {e}")
-        return 0
     # Döndürür: "yukari", "asagi", veya "yatay"
     try:
         inst = okx_symbol(symbol)
@@ -181,6 +165,22 @@ def son_15dk_hareket(symbol):
         print(f"Trend yönü hatası: {e}")
         return "yatay"
 
+def son_15dk_hareket(symbol):
+    # Açılıştan önceki 15 dakikada (3 mum) net % hareket
+    try:
+        inst = okx_symbol(symbol)
+        url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=3"
+        r = requests.get(url, timeout=10)
+        mumlar = r.json()["data"]
+        if len(mumlar) < 3:
+            return 0
+        mumlar = list(reversed(mumlar))
+        kapanislar = [float(m[4]) for m in mumlar]
+        hareket = (kapanislar[-1] - kapanislar[0]) / kapanislar[0] * 100
+        return round(hareket, 2)
+    except Exception as e:
+        print(f"15dk hareket hatası: {e}")
+        return 0
 def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay"):
     bakiye = bakiye_al()
     islem_buyuklugu = 75.0
