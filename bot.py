@@ -144,7 +144,7 @@ def fiyat_al(symbol):
         return None
 
 def trend_yonu(symbol):
-    def son_15dk_hareket(symbol):
+def son_15dk_hareket(symbol):
     # Açılıştan önceki 15 dakikada (3 mum) net % hareket
     try:
         inst = okx_symbol(symbol)
