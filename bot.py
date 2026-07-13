@@ -242,7 +242,9 @@ def pozisyon_kapat(symbol, fiyat, sebep):
         "symbol": symbol, "yon": yon, "giris": ort_fiyat, "cikis": fiyat,
         "kar_usdt": round(kar_usdt, 4), "sebep": sebep,
         "acilis": acilis, "zaman": kapanis, "sure_dk": sure_dk,
-        "kademe": len(poz["alimlar"])
+        "kademe": len(poz["alimlar"]),
+        "acilis_trend": poz.get("acilis_trend", "bilinmiyor"),
+        "acilis_15dk": poz.get("acilis_15dk", 0)
     })
     pozisyon_sil(symbol)
     mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} {yon.upper()} Kapandı ({sebep})\n"
