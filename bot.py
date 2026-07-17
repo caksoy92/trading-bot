@@ -28,7 +28,7 @@ TRAILING_BASLA = 0.01
 TRAILING_MESAFE = 0.01
 TREND_ESIK = 0.85
 TREND_ESIK_YON = 0.015
-MAX_YON_POZISYON = 4
+MAX_YON_POZISYON = 3
 pozisyon_kilidi = threading.Lock()
 
 def okx_symbol(symbol):
