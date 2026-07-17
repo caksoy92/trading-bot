@@ -304,7 +304,16 @@ def sinyal_isle(symbol, fiyat, action):
         yon = "short" if action == "sell" else "long" if action == "buy" else None
         if yon is None:
             return
-        # Trend kontrolü kilit dışında (yavaş, OKX'e gidiyor)
+        # 1) Ters sinyal: açık pozisyon varsa yönüne bak
+        with pozisyon_kilidi:
+            pozisyonlar = pozisyonlari_al()
+            if symbol in pozisyonlar:
+                mevcut_yon = pozisyonlar[symbol]["yon"]
+                if mevcut_yon == yon:
+                    return
+                anlik = fiyat_al(symbol) or fiyat
+                pozisyon_kapat(symbol, anlik, "TERS SİNYAL")
+        # 2) Yeni pozisyon açma (filtrelerden geçmeli)
         trend = trend_yonu(symbol)
         if yon == "short" and trend == "yukari":
             telegram_gonder(f"⏭️ {symbol} SHORT atlandı (piyasa yükselişte)")
@@ -312,7 +321,6 @@ def sinyal_isle(symbol, fiyat, action):
         if yon == "long" and trend == "asagi":
             telegram_gonder(f"⏭️ {symbol} LONG atlandı (piyasa düşüşte)")
             return
-        # Limit kontrolü + pozisyon açma kilit içinde (race condition önlenir)
         with pozisyon_kilidi:
             pozisyonlar = pozisyonlari_al()
             if symbol in pozisyonlar:
