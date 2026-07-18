@@ -689,7 +689,6 @@ def panel_veri():
         "kademe_dagilim": kademe_dagilim,
         "stop_analizi": stop_analizi
     }
-    }
     kilitli = sum(a["fiyat"] * a["adet"] / KALDIRAC for poz in pozisyonlari_al().values() for a in poz["alimlar"])
     bakiye = bakiye_al()
     toplam_deger = bakiye + kilitli + toplam_anlik_kz
