@@ -406,7 +406,7 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 </style>
 </head>
 <body>
-<h1>📊 Trading Bot Panel</h1>
+<h1>📊 Trading Bot Panel <button id="botToggle" onclick="botDurumDegistir()" style="float:right;padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer">-</button></h1>
 <div class="ozet">
 <div class="kutu"><div class="etiket">Toplam Değer</div><div class="deger" id="toplamDeger">-</div></div>
 <div class="kutu"><div class="etiket">Realize K/Z</div><div class="deger" id="realizeKz">-</div></div>
@@ -433,6 +433,16 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <div class="gecmis"><h2>Son İşlemler</h2><div id="gecmis"></div></div>
 <div class="kucuk">Her 30 saniyede otomatik güncellenir</div>
 <script>
+async function botDurumDegistir(){
+  const aktif = document.getElementById('botToggle').dataset.aktif === '1';
+  const soru = aktif ? 'Botu DURDURMAK istediğine emin misin? (Açık pozisyonlar korunmaya devam eder)' : 'Botu tekrar BAŞLATMAK istiyor musun?';
+  if(!confirm(soru)) return;
+  try{
+    const r = await fetch('/bot-durum', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    const d = await r.json();
+    if(d.status==='ok'){ yukle(); } else { alert('Hata: '+(d.mesaj||'')); }
+  }catch(e){ alert('İstek hatası: '+e); }
+}
 async function pozKapat(symbol){
   if(!confirm(symbol + ' pozisyonunu kapatmak istediğine emin misin?')) return;
   try{
@@ -461,6 +471,11 @@ async function yukle(){
     kz.textContent = (d.toplam_anlik_kz>=0?'+':'') + d.toplam_anlik_kz + ' $';
     kz.style.color = d.toplam_anlik_kz>=0 ? '#2ecc71' : '#e74c3c';
     document.getElementById('pozSayi').textContent = d.pozisyonlar.length;
+    const bt = document.getElementById('botToggle');
+    bt.dataset.aktif = d.bot_aktif ? '1' : '0';
+    bt.textContent = d.bot_aktif ? '⏸️ Durdur' : '▶️ Başlat';
+    bt.style.background = d.bot_aktif ? '#3d1a1a' : '#1a3d2a';
+    bt.style.color = d.bot_aktif ? '#e74c3c' : '#2ecc71';
     const st = d.istatistik;
     document.getElementById('stToplam').textContent = st.toplam_islem;
     document.getElementById('stOran').textContent = st.kazanma_orani + '%';
