@@ -320,6 +320,9 @@ def fiyat_takip():
 
 def sinyal_isle(symbol, fiyat, action):
     try:
+        if not bot_aktif_mi():
+            print(f"Bot durdurulmuş, sinyal atlandı: {symbol} {action}")
+            return
         yon = "short" if action == "sell" else "long" if action == "buy" else None
         if yon is None:
             return
