@@ -430,6 +430,10 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Ortalama Düşürme Analizi</div>
 <div id="kademeDagilim" style="font-size:13px"></div>
 </div>
+<div style="grid-column:1/-1;margin-top:12px;border-top:1px solid #2a2d34;padding-top:12px">
+<div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Stop Analizi (açılış koşullarına göre)</div>
+<div id="stopAnalizi" style="font-size:13px"></div>
+</div>
 </div>
 </div>
 <div id="pozisyonlar"></div>
@@ -497,6 +501,24 @@ async function yukle(){
         <span>${d.toplam} işlem · ${d.kazanan}K/${d.kaybeden}Z · %${oran} · <span style="color:${d.net>=0?'#2ecc71':'#e74c3c'}">${d.net>=0?'+':''}${d.net}$</span></span>
       </div>`;
     }).join('');
+    const sa = st.stop_analizi;
+    const hEtiket = {'sakin':'Sakin giriş (15dk <%0.5)','hafif':'Hafif hareket (%0.5-1)','ani':'Ani hareket (%1+)'};
+    const tEtiket = {'yukari':'Trend: Yükseliş','asagi':'Trend: Düşüş','yatay':'Trend: Yatay'};
+    const saSatir = (etiket, g) => {
+      if(!g || g.toplam===0) return `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#8a8f99"><span>${etiket}</span><span>-</span></div>`;
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0">
+        <span>${etiket}</span>
+        <span>${g.toplam} işlem · ${g.stop} stop (%${g.stop_orani}) · <span style="color:${g.net>=0?'#2ecc71':'#e74c3c'}">${g.net>=0?'+':''}${g.net}$</span></span>
+      </div>`;
+    };
+    if(!sa || sa.veri_var===0){
+      document.getElementById('stopAnalizi').innerHTML = '<div style="color:#8a8f99">Henüz veri yok — bug düzeltmesi sonrası yeni işlemlerle dolacak</div>';
+    } else {
+      document.getElementById('stopAnalizi').innerHTML =
+        ['sakin','hafif','ani'].map(k=>saSatir(hEtiket[k], sa.hareket[k])).join('') +
+        '<div style="height:6px"></div>' +
+        ['yukari','asagi','yatay'].map(k=>saSatir(tEtiket[k], sa.trend[k])).join('');
+    }
     const rkz = document.getElementById('realizeKz');
     rkz.textContent = (d.realize_kz>=0?'+':'') + d.realize_kz + ' $';
     rkz.style.color = d.realize_kz>=0 ? '#2ecc71' : '#e74c3c';
@@ -641,6 +663,22 @@ def panel_veri():
             }
         else:
             kademe_dagilim[str(k)] = {"toplam": 0, "kazanan": 0, "kaybeden": 0, "net": 0}
+            gecerli = [g for g in gecmis if g.get("acilis_trend", "bilinmiyor") != "bilinmiyor"]
+    def grup_ozet(islemler):
+        stoplar = len([g for g in islemler if g.get("sebep") == "STOP"])
+        return {
+            "toplam": len(islemler),
+            "stop": stoplar,
+            "stop_orani": round(stoplar / len(islemler) * 100) if islemler else 0,
+            "net": round(sum(g.get("kar_usdt", 0) for g in islemler), 2)
+        }
+    stop_analizi = {"veri_var": len(gecerli), "hareket": {}, "trend": {}}
+    for ad, alt, ust in [("sakin", 0, 0.5), ("hafif", 0.5, 1.0), ("ani", 1.0, 99999)]:
+        stop_analizi["hareket"][ad] = grup_ozet(
+            [g for g in gecerli if alt <= abs(g.get("acilis_15dk", 0)) < ust])
+    for t in ["yukari", "asagi", "yatay"]:
+        stop_analizi["trend"][t] = grup_ozet(
+            [g for g in gecerli if g.get("acilis_trend") == t])
     istatistik = {
         "toplam_islem": toplam_islem,
         "kazanma_orani": kazanma_orani,
@@ -648,7 +686,9 @@ def panel_veri():
         "ort_kazanc": ort_kazanc,
         "ort_kayip": ort_kayip,
         "ort_sure": ort_sure,
-        "kademe_dagilim": kademe_dagilim
+        "kademe_dagilim": kademe_dagilim,
+        "stop_analizi": stop_analizi
+    }
     }
     kilitli = sum(a["fiyat"] * a["adet"] / KALDIRAC for poz in pozisyonlari_al().values() for a in poz["alimlar"])
     bakiye = bakiye_al()
