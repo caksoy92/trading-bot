@@ -200,7 +200,7 @@ def son_15dk_hareket(symbol):
     except Exception as e:
         print(f"15dk hareket hatası: {e}")
         return 0
-def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay"):
+def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay", hareket_15dk=0):
     bakiye = bakiye_al()
     islem_buyuklugu = 75.0
     if bakiye < islem_buyuklugu:
@@ -212,7 +212,9 @@ def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay"):
     pozisyonlar = pozisyonlari_al()
     if symbol not in pozisyonlar:
         poz = {"yon": yon, "alimlar": [], "toplam_adet": 0, "ortalama_fiyat": 0,
-               "acilis_zamani": tr_simdi().strftime("%Y-%m-%d %H:%M:%S")}
+               "acilis_zamani": tr_simdi().strftime("%Y-%m-%d %H:%M:%S"),
+               "acilis_trend": trend,
+               "acilis_15dk": hareket_15dk}
     else:
         poz = pozisyonlar[symbol]
     poz["alimlar"].append({"fiyat": fiyat, "adet": adet})
@@ -337,6 +339,7 @@ def sinyal_isle(symbol, fiyat, action):
                 pozisyon_kapat(symbol, anlik, "TERS SİNYAL")
         # 2) Yeni pozisyon açma (filtrelerden geçmeli)
         trend = trend_yonu(symbol)
+        hareket_15dk = son_15dk_hareket(symbol)
         if yon == "short" and trend == "yukari":
             telegram_gonder(f"⏭️ {symbol} SHORT atlandı (piyasa yükselişte)")
             return
@@ -351,7 +354,7 @@ def sinyal_isle(symbol, fiyat, action):
             if ayni_yon >= MAX_YON_POZISYON:
                 telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
                 return
-            pozisyon_ac(symbol, fiyat, yon, 1, trend)
+            pozisyon_ac(symbol, fiyat, yon, 1, trend, hareket_15dk)
     except Exception as e:
         print(f"Sinyal işleme hatası: {e}")
 
