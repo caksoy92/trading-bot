@@ -536,6 +536,16 @@ setInterval(yukle, 30000);
 </script>
 </body>
 </html>"""
+@app.route('/bot-durum', methods=['POST'])
+def bot_durum_degistir():
+    try:
+        yeni = not bot_aktif_mi()
+        bot_aktif_yaz(yeni)
+        durum = "aktif" if yeni else "durduruldu"
+        telegram_gonder(f"{'▶️' if yeni else '⏸️'} Bot {durum}")
+        return jsonify({"status": "ok", "aktif": yeni})
+    except Exception as e:
+        return jsonify({"status": "hata", "mesaj": str(e)})
 @app.route('/pozisyon-kapat', methods=['POST'])
 def manuel_kapat():
     try:
