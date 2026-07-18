@@ -50,7 +50,26 @@ def db_kur():
         c.execute("INSERT INTO ayarlar (anahtar, deger) VALUES ('bakiye', %s)", (str(BASLANGIC_BAKIYE),))
     conn.commit()
     conn.close()
+def bot_aktif_mi():
+    try:
+        conn = db_baglan()
+        c = conn.cursor()
+        c.execute("SELECT deger FROM ayarlar WHERE anahtar='bot_aktif'")
+        r = c.fetchone()
+        conn.close()
+        return r[0] == "1" if r else True
+    except Exception as e:
+        print(f"Bot durum okuma hatası: {e}")
+        return True
 
+def bot_aktif_yaz(aktif):
+    deger = "1" if aktif else "0"
+    conn = db_baglan()
+    c = conn.cursor()
+    c.execute("INSERT INTO ayarlar (anahtar, deger) VALUES ('bot_aktif', %s) ON CONFLICT (anahtar) DO UPDATE SET deger = %s", (deger, deger))
+    conn.commit()
+    conn.close()
+    
 def bakiye_al():
     conn = db_baglan()
     c = conn.cursor()
