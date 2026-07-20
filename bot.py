@@ -18,6 +18,7 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 HEDEF_URLLER = os.environ.get("HEDEF_URLLER", "")
+FRIEND_WEBHOOK_SECRET = os.environ.get("FRIEND_WEBHOOK_SECRET")
 
 BASLANGIC_BAKIYE = 1000.0
 KALDIRAC = 7
@@ -59,7 +60,7 @@ def bot_aktif_mi():
         conn.close()
         return r[0] == "1" if r else True
     except Exception as e:
-        print(f"Bot durum okuma hatası: {e}")
+        print(f"Bot durum okuma hatasi: {e}")
         return True
 
 def bot_aktif_yaz(aktif):
@@ -144,14 +145,19 @@ def telegram_gonder(mesaj):
 def sinyali_ilet(data):
     if not HEDEF_URLLER.strip():
         return
+    basliklar = {}
+    if FRIEND_WEBHOOK_SECRET:
+        basliklar["X-Auth"] = FRIEND_WEBHOOK_SECRET
     for url in HEDEF_URLLER.split(","):
         url = url.strip()
         if not url:
             continue
         try:
-            requests.post(url, json=data, timeout=5)
+            r = requests.post(url, json=data, headers=basliklar, timeout=5)
+            if r.status_code != 200:
+                print(f"Iletim reddedildi ({url}): {r.status_code} {r.text[:150]}")
         except Exception as e:
-            print(f"İletim hatası ({url}): {e}")
+            print(f"Iletim hatasi ({url}): {e}")
 
 def fiyat_al(symbol):
     try:
@@ -163,7 +169,7 @@ def fiyat_al(symbol):
         return None
 
 def trend_yonu(symbol):
-    # Döndürür: "yukari", "asagi", veya "yatay"
+    # Dondurur: "yukari", "asagi", veya "yatay"
     try:
         inst = okx_symbol(symbol)
         url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=12"
@@ -181,11 +187,11 @@ def trend_yonu(symbol):
         else:
             return "yatay"
     except Exception as e:
-        print(f"Trend yönü hatası: {e}")
+        print(f"Trend yonu hatasi: {e}")
         return "yatay"
 
 def son_15dk_hareket(symbol):
-    # Açılıştan önceki 15 dakikada (3 mum) net % hareket
+    # Acilistan onceki 15 dakikada (3 mum) net % hareket
     try:
         inst = okx_symbol(symbol)
         url = f"https://www.okx.com/api/v5/market/candles?instId={inst}&bar=5m&limit=3"
@@ -198,13 +204,13 @@ def son_15dk_hareket(symbol):
         hareket = (kapanislar[-1] - kapanislar[0]) / kapanislar[0] * 100
         return round(hareket, 2)
     except Exception as e:
-        print(f"15dk hareket hatası: {e}")
+        print(f"15dk hareket hatasi: {e}")
         return 0
 def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay", hareket_15dk=0):
     bakiye = bakiye_al()
     islem_buyuklugu = 75.0
     if bakiye < islem_buyuklugu:
-        telegram_gonder(f"⚠️ {symbol} için yeterli bakiye yok!")
+        telegram_gonder(f"⚠️ {symbol} icin yeterli bakiye yok!")
         return
     adet = (islem_buyuklugu * KALDIRAC) / fiyat
     bakiye -= islem_buyuklugu
@@ -223,8 +229,8 @@ def pozisyon_ac(symbol, fiyat, yon, kac_alim, trend="yatay", hareket_15dk=0):
     poz["ortalama_fiyat"] = toplam_maliyet / poz["toplam_adet"]
     pozisyon_yaz(symbol, poz)
     ikon = "📈" if yon == "long" else "📉"
-    trend_etiket = {"yukari": "📈 Yükseliş", "asagi": "📉 Düşüş", "yatay": "➡️ Yatay"}.get(trend, trend)
-    mesaj = (f"{ikon} {yon.upper()} Açıldı ({kac_alim}. alım)\n"
+    trend_etiket = {"yukari": "📈 Yukselis", "asagi": "📉 Dusus", "yatay": "➡️ Yatay"}.get(trend, trend)
+    mesaj = (f"{ikon} {yon.upper()} Acildi ({kac_alim}. alim)\n"
              f"Sembol: {symbol}\n"
              f"Fiyat: {fiyat}\n"
              f"Ortalama: {poz['ortalama_fiyat']:.4f}\n"
@@ -268,10 +274,10 @@ def pozisyon_kapat(symbol, fiyat, sebep):
         "acilis_15dk": poz.get("acilis_15dk", 0)
     })
     pozisyon_sil(symbol)
-    mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} {yon.upper()} Kapandı ({sebep})\n"
+    mesaj = (f"{'✅' if kar_usdt > 0 else '❌'} {yon.upper()} Kapandi ({sebep})\n"
              f"Sembol: {symbol}\n"
-             f"Giriş: {ort_fiyat:.4f}\n"
-             f"Çıkış: {fiyat:.4f}\n"
+             f"Giris: {ort_fiyat:.4f}\n"
+             f"Cikis: {fiyat:.4f}\n"
              f"Kar/Zarar: {kar_usdt:.4f} USDT\n"
              f"Bakiye: {bakiye:.2f} USDT")
     telegram_gonder(mesaj)
@@ -304,7 +310,7 @@ def pozisyon_kontrol(symbol, fiyat):
         telegram_gonder(f"🚀 {symbol} trailing aktif! Kar: %{kar*100:.2f} (pump takibi)")
         return
     if not poz.get("trailing_aktif") and kar >= KAR_HEDEF:
-        pozisyon_kapat(symbol, fiyat, "KAR HEDEFİ")
+        pozisyon_kapat(symbol, fiyat, "KAR HEDEFI")
     elif dusus >= STOP_ESIK:
         pozisyon_kapat(symbol, fiyat, "STOP")
 
@@ -317,18 +323,18 @@ def fiyat_takip():
                 if fiyat:
                     pozisyon_kontrol(symbol, fiyat)
         except Exception as e:
-            print(f"Fiyat takip hatası: {e}")
+            print(f"Fiyat takip hatasi: {e}")
         time.sleep(30)
 
 def sinyal_isle(symbol, fiyat, action):
     try:
         if not bot_aktif_mi():
-            print(f"Bot durdurulmuş, sinyal atlandı: {symbol} {action}")
+            print(f"Bot durdurulmus, sinyal atlandi: {symbol} {action}")
             return
         yon = "short" if action == "sell" else "long" if action == "buy" else None
         if yon is None:
             return
-        # 1) Ters sinyal: açık pozisyon varsa yönüne bak
+        # 1) Ters sinyal: acik pozisyon varsa yonune bak
         with pozisyon_kilidi:
             pozisyonlar = pozisyonlari_al()
             if symbol in pozisyonlar:
@@ -336,15 +342,15 @@ def sinyal_isle(symbol, fiyat, action):
                 if mevcut_yon == yon:
                     return
                 anlik = fiyat_al(symbol) or fiyat
-                pozisyon_kapat(symbol, anlik, "TERS SİNYAL")
-        # 2) Yeni pozisyon açma (filtrelerden geçmeli)
+                pozisyon_kapat(symbol, anlik, "TERS SINYAL")
+        # 2) Yeni pozisyon acma (filtrelerden gecmeli)
         trend = trend_yonu(symbol)
         hareket_15dk = son_15dk_hareket(symbol)
         if yon == "short" and trend == "yukari":
-            telegram_gonder(f"⏭️ {symbol} SHORT atlandı (piyasa yükselişte)")
+            telegram_gonder(f"⏭️ {symbol} SHORT atlandi (piyasa yukselipte)")
             return
         if yon == "long" and trend == "asagi":
-            telegram_gonder(f"⏭️ {symbol} LONG atlandı (piyasa düşüşte)")
+            telegram_gonder(f"⏭️ {symbol} LONG atlandi (piyasa dususte)")
             return
         with pozisyon_kilidi:
             pozisyonlar = pozisyonlari_al()
@@ -352,11 +358,11 @@ def sinyal_isle(symbol, fiyat, action):
                 return
             ayni_yon = len([p for p in pozisyonlar.values() if p["yon"] == yon])
             if ayni_yon >= MAX_YON_POZISYON:
-                telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandı (yön limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
+                telegram_gonder(f"🚫 {symbol} {yon.upper()} atlandi (yon limiti dolu: {ayni_yon}/{MAX_YON_POZISYON})")
                 return
             pozisyon_ac(symbol, fiyat, yon, 1, trend, hareket_15dk)
     except Exception as e:
-        print(f"Sinyal işleme hatası: {e}")
+        print(f"Sinyal isleme hatasi: {e}")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -411,47 +417,47 @@ h1{font-size:18px;font-weight:600;margin:0 0 16px}
 <body>
 <h1>📊 Trading Bot Panel <button id="botToggle" onclick="botDurumDegistir()" style="float:right;padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer">-</button></h1>
 <div class="ozet">
-<div class="kutu"><div class="etiket">Toplam Değer</div><div class="deger" id="toplamDeger">-</div></div>
+<div class="kutu"><div class="etiket">Toplam Deger</div><div class="deger" id="toplamDeger">-</div></div>
 <div class="kutu"><div class="etiket">Realize K/Z</div><div class="deger" id="realizeKz">-</div></div>
-<div class="kutu"><div class="etiket">Anlık K/Z</div><div class="deger" id="anlikKz">-</div></div>
+<div class="kutu"><div class="etiket">Anlik K/Z</div><div class="deger" id="anlikKz">-</div></div>
 <div class="kutu"><div class="etiket">Bakiye</div><div class="deger" id="bakiye">-</div></div>
-<div class="kutu"><div class="etiket">Açık Pozisyon</div><div class="deger" id="pozSayi">-</div></div>
+<div class="kutu"><div class="etiket">Acik Pozisyon</div><div class="deger" id="pozSayi">-</div></div>
 </div>
 <div style="background:#1a1d24;border-radius:10px;padding:14px;margin-bottom:20px">
-<div style="font-size:14px;color:#a8adb5;margin-bottom:12px;font-weight:600">📈 İstatistikler</div>
+<div style="font-size:14px;color:#a8adb5;margin-bottom:12px;font-weight:600">📈 Istatistikler</div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-<div><div style="font-size:11px;color:#8a8f99">Toplam İşlem</div><div style="font-size:17px;font-weight:600" id="stToplam">-</div></div>
-<div><div style="font-size:11px;color:#8a8f99">Kazanma Oranı</div><div style="font-size:17px;font-weight:600" id="stOran">-</div></div>
-<div><div style="font-size:11px;color:#8a8f99">Kar Faktörü</div><div style="font-size:17px;font-weight:600" id="stFaktor">-</div></div>
-<div><div style="font-size:11px;color:#8a8f99">Ort. Kazanç</div><div style="font-size:17px;font-weight:600;color:#2ecc71" id="stOrtK">-</div></div>
-<div><div style="font-size:11px;color:#8a8f99">Ort. Kayıp</div><div style="font-size:17px;font-weight:600;color:#e74c3c" id="stOrtZ">-</div></div>
-<div><div style="font-size:11px;color:#8a8f99">Ort. Süre</div><div style="font-size:17px;font-weight:600" id="stSure">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Toplam Islem</div><div style="font-size:17px;font-weight:600" id="stToplam">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Kazanma Orani</div><div style="font-size:17px;font-weight:600" id="stOran">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Kar Faktoru</div><div style="font-size:17px;font-weight:600" id="stFaktor">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Ort. Kazanc</div><div style="font-size:17px;font-weight:600;color:#2ecc71" id="stOrtK">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Ort. Kayip</div><div style="font-size:17px;font-weight:600;color:#e74c3c" id="stOrtZ">-</div></div>
+<div><div style="font-size:11px;color:#8a8f99">Ort. Sure</div><div style="font-size:17px;font-weight:600" id="stSure">-</div></div>
 <div style="grid-column:1/-1;margin-top:12px;border-top:1px solid #2a2d34;padding-top:12px">
-<div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Ortalama Düşürme Analizi</div>
+<div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Ortalama Dusurme Analizi</div>
 <div id="kademeDagilim" style="font-size:13px"></div>
 </div>
 <div style="grid-column:1/-1;margin-top:12px;border-top:1px solid #2a2d34;padding-top:12px">
-<div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Stop Analizi (açılış koşullarına göre)</div>
+<div style="font-size:12px;color:#a8adb5;margin-bottom:8px">Stop Analizi (acilis kosullarina gore)</div>
 <div id="stopAnalizi" style="font-size:13px"></div>
 </div>
 </div>
 </div>
 <div id="pozisyonlar"></div>
-<div class="gecmis"><h2>Son İşlemler</h2><div id="gecmis"></div></div>
-<div class="kucuk">Her 30 saniyede otomatik güncellenir</div>
+<div class="gecmis"><h2>Son Islemler</h2><div id="gecmis"></div></div>
+<div class="kucuk">Her 30 saniyede otomatik guncellenir</div>
 <script>
 async function botDurumDegistir(){
   const aktif = document.getElementById('botToggle').dataset.aktif === '1';
-  const soru = aktif ? 'Botu DURDURMAK istediğine emin misin? (Açık pozisyonlar korunmaya devam eder)' : 'Botu tekrar BAŞLATMAK istiyor musun?';
+  const soru = aktif ? 'Botu DURDURMAK istedigine emin misin? (Acik pozisyonlar korunmaya devam eder)' : 'Botu tekrar BASLATMAK istiyor musun?';
   if(!confirm(soru)) return;
   try{
     const r = await fetch('/bot-durum', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
     const d = await r.json();
     if(d.status==='ok'){ yukle(); } else { alert('Hata: '+(d.mesaj||'')); }
-  }catch(e){ alert('İstek hatası: '+e); }
+  }catch(e){ alert('Istek hatasi: '+e); }
 }
 async function pozKapat(symbol){
-  if(!confirm(symbol + ' pozisyonunu kapatmak istediğine emin misin?')) return;
+  if(!confirm(symbol + ' pozisyonunu kapatmak istedigine emin misin?')) return;
   try{
     const r = await fetch('/pozisyon-kapat', {
       method: 'POST',
@@ -460,13 +466,13 @@ async function pozKapat(symbol){
     });
     const d = await r.json();
     if(d.status === 'ok'){
-      alert(symbol + ' kapatıldı');
+      alert(symbol + ' kapatildi');
       yukle();
     } else {
       alert('Hata: ' + (d.mesaj || 'bilinmeyen'));
     }
   }catch(e){
-    alert('İstek hatası: ' + e);
+    alert('Istek hatasi: ' + e);
   }
 }
 async function yukle(){
@@ -480,7 +486,7 @@ async function yukle(){
     document.getElementById('pozSayi').textContent = d.pozisyonlar.length;
     const bt = document.getElementById('botToggle');
     bt.dataset.aktif = d.bot_aktif ? '1' : '0';
-    bt.textContent = d.bot_aktif ? '⏸️ Durdur' : '▶️ Başlat';
+    bt.textContent = d.bot_aktif ? '⏸️ Durdur' : '▶️ Baslat';
     bt.style.background = d.bot_aktif ? '#3d1a1a' : '#1a3d2a';
     bt.style.color = d.bot_aktif ? '#e74c3c' : '#2ecc71';
     const st = d.istatistik;
@@ -491,28 +497,28 @@ async function yukle(){
     document.getElementById('stOrtZ').textContent = st.ort_kayip + ' $';
     document.getElementById('stSure').textContent = st.ort_sure!=null ? (st.ort_sure>=60 ? (st.ort_sure/60).toFixed(1)+' sa' : st.ort_sure+' dk') : '-';
     const kd = st.kademe_dagilim;
-    const etiketler = {'1':'Sadece 1. alım','2':'2. alıma girdi','3':'3. alıma girdi (max)'};
+    const etiketler = {'1':'Sadece 1. alim','2':'2. alima girdi','3':'3. alima girdi (max)'};
     document.getElementById('kademeDagilim').innerHTML = ['1','2','3'].map(k=>{
       const d = kd[k];
       if(d.toplam===0) return `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#8a8f99"><span>${etiketler[k]}</span><span>-</span></div>`;
       const oran = Math.round(d.kazanan/d.toplam*100);
       return `<div style="display:flex;justify-content:space-between;padding:4px 0">
         <span>${etiketler[k]}</span>
-        <span>${d.toplam} işlem · ${d.kazanan}K/${d.kaybeden}Z · %${oran} · <span style="color:${d.net>=0?'#2ecc71':'#e74c3c'}">${d.net>=0?'+':''}${d.net}$</span></span>
+        <span>${d.toplam} islem · ${d.kazanan}K/${d.kaybeden}Z · %${oran} · <span style="color:${d.net>=0?'#2ecc71':'#e74c3c'}">${d.net>=0?'+':''}${d.net}$</span></span>
       </div>`;
     }).join('');
     const sa = st.stop_analizi;
-    const hEtiket = {'sakin':'Sakin giriş (15dk <%0.5)','hafif':'Hafif hareket (%0.5-1)','ani':'Ani hareket (%1+)'};
-    const tEtiket = {'yukari':'Trend: Yükseliş','asagi':'Trend: Düşüş','yatay':'Trend: Yatay'};
+    const hEtiket = {'sakin':'Sakin giris (15dk <%0.5)','hafif':'Hafif hareket (%0.5-1)','ani':'Ani hareket (%1+)'};
+    const tEtiket = {'yukari':'Trend: Yukselis','asagi':'Trend: Dusus','yatay':'Trend: Yatay'};
     const saSatir = (etiket, g) => {
       if(!g || g.toplam===0) return `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#8a8f99"><span>${etiket}</span><span>-</span></div>`;
       return `<div style="display:flex;justify-content:space-between;padding:4px 0">
         <span>${etiket}</span>
-        <span>${g.toplam} işlem · ${g.stop} stop (%${g.stop_orani}) · <span style="color:${g.net>=0?'#2ecc71':'#e74c3c'}">${g.net>=0?'+':''}${g.net}$</span></span>
+        <span>${g.toplam} islem · ${g.stop} stop (%${g.stop_orani}) · <span style="color:${g.net>=0?'#2ecc71':'#e74c3c'}">${g.net>=0?'+':''}${g.net}$</span></span>
       </div>`;
     };
     if(!sa || sa.veri_var===0){
-      document.getElementById('stopAnalizi').innerHTML = '<div style="color:#8a8f99">Henüz veri yok — bug düzeltmesi sonrası yeni işlemlerle dolacak</div>';
+      document.getElementById('stopAnalizi').innerHTML = '<div style="color:#8a8f99">Henuz veri yok</div>';
     } else {
       document.getElementById('stopAnalizi').innerHTML =
         ['sakin','hafif','ani'].map(k=>saSatir(hEtiket[k], sa.hareket[k])).join('') +
@@ -527,7 +533,7 @@ async function yukle(){
     td.style.color = d.toplam_deger>=d.baslangic ? '#2ecc71' : '#e74c3c';
     const pc = document.getElementById('pozisyonlar');
     if(d.pozisyonlar.length===0){
-      pc.innerHTML = '<div class="bos">Açık pozisyon yok</div>';
+      pc.innerHTML = '<div class="bos">Acik pozisyon yok</div>';
     } else {
       pc.innerHTML = d.pozisyonlar.map(p=>`
         <div class="poz ${p.yon}">
@@ -536,8 +542,8 @@ async function yukle(){
             <span class="yon ${p.yon}">${p.yon}</span>
           </div>
           <div class="satir"><span>Ortalama</span><span>${p.ortalama}</span></div>
-          <div class="satir"><span>Anlık fiyat</span><span>${p.anlik}</span></div>
-          <div class="satir"><span>Alım sayısı</span><span>${p.alim_sayisi}/2</span></div>
+          <div class="satir"><span>Anlik fiyat</span><span>${p.anlik}</span></div>
+          <div class="satir"><span>Alim sayisi</span><span>${p.alim_sayisi}/2</span></div>
           <div class="satir" style="margin-top:8px">
             <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_usdt>=0?'+':''}${p.kar_usdt} $</span>
             <span class="kz ${p.kar_usdt>=0?'art':'eks'}">${p.kar_yuzde>=0?'+':''}${p.kar_yuzde}%</span>
@@ -550,7 +556,7 @@ async function yukle(){
     const gc = document.getElementById('gecmis');
     const son = d.gecmis.slice(-10).reverse();
     if(son.length===0){
-      gc.innerHTML = '<div class="bos">Henüz işlem yok</div>';
+      gc.innerHTML = '<div class="bos">Henuz islem yok</div>';
     } else {
       gc.innerHTML = son.map(g=>{
         let sure = g.sure_dk!=null ? (g.sure_dk>=60 ? (g.sure_dk/60).toFixed(1)+' sa' : g.sure_dk+' dk') : '-';
@@ -595,16 +601,16 @@ def manuel_kapat():
             return jsonify({"status": "hata", "mesaj": "symbol yok"})
         pozisyonlar = pozisyonlari_al()
         if symbol not in pozisyonlar:
-            return jsonify({"status": "hata", "mesaj": "pozisyon bulunamadı"})
+            return jsonify({"status": "hata", "mesaj": "pozisyon bulunamadi"})
         fiyat = fiyat_al(symbol)
         if not fiyat:
-            return jsonify({"status": "hata", "mesaj": "fiyat alınamadı"})
+            return jsonify({"status": "hata", "mesaj": "fiyat alinamadi"})
         with pozisyon_kilidi:
             if symbol in pozisyonlari_al():
                 pozisyon_kapat(symbol, fiyat, "MANUEL")
         return jsonify({"status": "ok"})
     except Exception as e:
-        print(f"Manuel kapatma hatası: {e}")
+        print(f"Manuel kapatma hatasi: {e}")
         return jsonify({"status": "hata", "mesaj": str(e)})
 @app.route('/panel-veri', methods=['GET'])
 def panel_veri():
@@ -663,7 +669,7 @@ def panel_veri():
             }
         else:
             kademe_dagilim[str(k)] = {"toplam": 0, "kazanan": 0, "kaybeden": 0, "net": 0}
-            gecerli = [g for g in gecmis if g.get("acilis_trend", "bilinmiyor") != "bilinmiyor"]
+    gecerli = [g for g in gecmis if g.get("acilis_trend", "bilinmiyor") != "bilinmiyor"]
     def grup_ozet(islemler):
         stoplar = len([g for g in islemler if g.get("sebep") == "STOP"])
         return {
@@ -716,5 +722,5 @@ if __name__ == '__main__':
     db_kur()
     t = threading.Thread(target=fiyat_takip, daemon=True)
     t.start()
-    print("Bot başladı (veritabanı aktif)!")
+    print("Bot basladi (veritabani aktif)!")
     app.run(host='0.0.0.0', port=8080)
